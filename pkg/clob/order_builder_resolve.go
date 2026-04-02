@@ -20,6 +20,9 @@ func (b *OrderBuilder) resolveTickSize(ctx context.Context, tokenID string) (dec
 		parsed := decimal.NewFromFloat(b.tickSize)
 		override = &parsed
 	}
+	if override != nil {
+		return *override, nil
+	}
 
 	hasClient := clientHasTransport(b.client)
 	if hasClient {
@@ -40,10 +43,6 @@ func (b *OrderBuilder) resolveTickSize(ctx context.Context, tokenID string) (dec
 		}
 		return minTick, nil
 	}
-
-	if override != nil {
-		return *override, nil
-	}
 	return decimal.Decimal{}, fmt.Errorf("tick size is required (set TickSize or provide a client)")
 }
 
@@ -53,15 +52,16 @@ func (b *OrderBuilder) resolveFeeRateBps(ctx context.Context, tokenID string) (i
 		return 0, err
 	}
 
-	if !clientHasTransport(b.client) {
+	if userFee > 0 {
 		return userFee, nil
+	}
+
+	if !clientHasTransport(b.client) {
+		return 0, fmt.Errorf("http client not available")
 	}
 
 	resp, err := b.client.FeeRate(ctx, &clobtypes.FeeRateRequest{TokenID: tokenID})
 	if err != nil {
-		if userFee > 0 {
-			return userFee, nil
-		}
 		return 0, fmt.Errorf("fee rate lookup failed: %w", err)
 	}
 
