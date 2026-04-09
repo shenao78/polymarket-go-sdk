@@ -129,6 +129,8 @@ type Client interface {
 
 	// -- Order & Trade Management --
 
+	SignOrder(order *clobtypes.Order) (*clobtypes.SignedOrder, error)
+
 	// PostOrder submits a pre-signed order to the exchange.
 	PostOrder(ctx context.Context, req *clobtypes.SignedOrder) (clobtypes.OrderResponse, error)
 	// PostOrders submits multiple pre-signed orders in a single batch.

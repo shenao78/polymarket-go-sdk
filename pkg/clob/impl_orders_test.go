@@ -214,9 +214,9 @@ func TestSignOrderDefaults(t *testing.T) {
 		Signer:      signer.Address(),
 	}
 
-	signed, err := client.signOrder(order)
+	signed, err := client.SignOrder(order)
 	if err != nil {
-		t.Fatalf("signOrder failed: %v", err)
+		t.Fatalf("SignOrder failed: %v", err)
 	}
 	if signed.Order.SignatureType == nil || *signed.Order.SignatureType != 1 {
 		t.Fatalf("signature type mismatch: %+v", signed.Order.SignatureType)

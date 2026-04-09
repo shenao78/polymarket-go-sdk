@@ -24,7 +24,7 @@ func (c *clientImpl) CreateOrder(ctx context.Context, order *clobtypes.Order) (c
 }
 
 func (c *clientImpl) CreateOrderWithOptions(ctx context.Context, order *clobtypes.Order, opts *clobtypes.OrderOptions) (clobtypes.OrderResponse, error) {
-	signed, err := c.signOrder(order)
+	signed, err := c.SignOrder(order)
 	if err != nil {
 		return clobtypes.OrderResponse{}, err
 	}
@@ -47,7 +47,7 @@ func (c *clientImpl) CreateOrderFromSignable(ctx context.Context, order *clobtyp
 	return c.CreateOrderWithOptions(ctx, order.Order, opts)
 }
 
-func (c *clientImpl) signOrder(order *clobtypes.Order) (*clobtypes.SignedOrder, error) {
+func (c *clientImpl) SignOrder(order *clobtypes.Order) (*clobtypes.SignedOrder, error) {
 	return signOrderWithCreds(c.signer, c.apiKey, order, &c.signatureType, c.funder, c.saltGenerator)
 }
 
