@@ -1,66 +1,73 @@
 package clob
 
-import "github.com/GoPolymarket/polymarket-go-sdk/pkg/clob/clobtypes"
-
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
+	"github.com/GoPolymarket/polymarket-go-sdk/pkg/clob/clobtypes"
 	"github.com/GoPolymarket/polymarket-go-sdk/pkg/types"
 )
 
-func buildOrderPayload(order *clobtypes.SignedOrder) (map[string]interface{}, error) {
+func buildOrderPayload(order *clobtypes.SignedOrder) (string, error) {
 	if order == nil {
-		return nil, fmt.Errorf("order is required")
+		return "", fmt.Errorf("order is required")
 	}
 	orderType := normalizeOrderType(order.OrderType, clobtypes.OrderTypeGTC)
-	if order.PostOnly != nil && *order.PostOnly && orderType != clobtypes.OrderTypeGTC && orderType != clobtypes.OrderTypeGTD {
-		return nil, fmt.Errorf("postOnly is only supported for GTC and GTD orders")
-	}
-	orderMap, err := orderWithSignature(order)
+	orderPart, err := orderWithSignature(order)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	payload := map[string]interface{}{
-		"order":     orderMap,
-		"owner":     order.Owner,
-		"orderType": orderType,
-	}
+	res := "{" +
+		"\"order\":" + orderPart + "," +
+		"\"orderType\":\"" + string(orderType) + "\"," +
+		"\"owner\":\"" + order.Owner + "\""
+
 	if order.PostOnly != nil {
-		payload["postOnly"] = *order.PostOnly
+		res += ",\"postOnly\":" + strconv.FormatBool(*order.PostOnly)
 	}
 	if order.DeferExec != nil {
-		payload["deferExec"] = *order.DeferExec
+		res += ",\"deferExec\":" + strconv.FormatBool(*order.DeferExec)
 	}
-	return payload, nil
+
+	res += "}"
+	return res, nil
 }
 
-func buildOrdersPayload(orders *clobtypes.SignedOrders) ([]map[string]interface{}, error) {
+func buildOrdersPayload(orders *clobtypes.SignedOrders) (string, error) {
 	if orders == nil {
-		return nil, fmt.Errorf("orders are required")
+		return "", fmt.Errorf("orders are required")
 	}
-	payloads := make([]map[string]interface{}, 0, len(orders.Orders))
-	for idx := range orders.Orders {
-		order := orders.Orders[idx]
-		payload, err := buildOrderPayload(&order)
+
+	res := "["
+	numOrders := len(orders.Orders)
+
+	for i := range orders.Orders {
+		payload, err := buildOrderPayload(&orders.Orders[i])
 		if err != nil {
-			return nil, err
+			return "", err
 		}
-		payloads = append(payloads, payload)
+
+		res += payload
+		if i < numOrders-1 {
+			res += ","
+		}
 	}
-	return payloads, nil
+
+	res += "]"
+	return res, nil
 }
 
-func orderWithSignature(order *clobtypes.SignedOrder) (map[string]interface{}, error) {
+func orderWithSignature(order *clobtypes.SignedOrder) (string, error) {
 	if order == nil {
-		return nil, fmt.Errorf("order is required")
+		return "", fmt.Errorf("order is required")
 	}
 	if order.Signature == "" {
-		return nil, fmt.Errorf("signature is required")
+		return "", fmt.Errorf("signature is required")
 	}
 	if order.Owner == "" {
-		return nil, fmt.Errorf("owner is required")
+		return "", fmt.Errorf("owner is required")
 	}
 
 	sigType := 0
@@ -70,29 +77,30 @@ func orderWithSignature(order *clobtypes.SignedOrder) (map[string]interface{}, e
 
 	side := strings.ToUpper(order.Order.Side)
 	if side != "BUY" && side != "SELL" {
-		return nil, fmt.Errorf("invalid order side %q", order.Order.Side)
+		return "", fmt.Errorf("invalid order side %q", order.Order.Side)
 	}
 
 	salt, err := saltToJSON(order.Order.Salt)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return map[string]interface{}{
-		"salt":          salt,
-		"maker":         order.Order.Maker.Hex(),
-		"signer":        order.Order.Signer.Hex(),
-		"taker":         order.Order.Taker.Hex(),
-		"tokenId":       u256String(order.Order.TokenID),
-		"makerAmount":   decimalString(order.Order.MakerAmount),
-		"takerAmount":   decimalString(order.Order.TakerAmount),
-		"side":          side,
-		"expiration":    u256String(order.Order.Expiration),
-		"nonce":         u256String(order.Order.Nonce),
-		"feeRateBps":    decimalString(order.Order.FeeRateBps),
-		"signatureType": sigType,
-		"signature":     order.Signature,
-	}, nil
+	saltStr := strconv.FormatUint(salt.(uint64), 10)
+	return "{" +
+		"\"expiration\":\"" + u256String(order.Order.Expiration) + "\"," +
+		"\"feeRateBps\":\"" + decimalString(order.Order.FeeRateBps) + "\"," +
+		"\"maker\":\"" + order.Order.Maker.Hex() + "\"," +
+		"\"makerAmount\":\"" + decimalString(order.Order.MakerAmount) + "\"," +
+		"\"nonce\":\"" + u256String(order.Order.Nonce) + "\"," +
+		"\"salt\":" + saltStr + "," +
+		"\"side\":\"" + side + "\"," +
+		"\"signature\":\"" + order.Signature + "\"," +
+		"\"signatureType\":" + strconv.Itoa(sigType) + "," +
+		"\"signer\":\"" + order.Order.Signer.Hex() + "\"," +
+		"\"taker\":\"" + order.Order.Taker.Hex() + "\"," +
+		"\"takerAmount\":\"" + decimalString(order.Order.TakerAmount) + "\"," +
+		"\"tokenId\":\"" + u256String(order.Order.TokenID) + "\"" +
+		"}", nil
 }
 
 func u256String(value types.U256) string {
