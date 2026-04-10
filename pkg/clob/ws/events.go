@@ -2,6 +2,7 @@ package ws
 
 import (
 	"encoding/json"
+	"unsafe"
 
 	"github.com/shopspring/decimal"
 )
@@ -77,9 +78,8 @@ func (c *clientImpl) processEvent(raw map[string]interface{}) {
 		}
 	case "best_bid_ask":
 		var event BestBidAskEvent
-		if err := json.Unmarshal(msgBytes, &event); err == nil {
-			c.dispatchBestBidAsk(event)
-		}
+		FastJsonUnmarshal(msgBytes, &event)
+		c.dispatchBestBidAsk(event)
 	case "new_market":
 		var wire struct {
 			ID           string        `json:"id"`
@@ -321,4 +321,56 @@ func (c *clientImpl) dispatchOrder(event OrderEvent) {
 	for _, sub := range subs {
 		sub.trySend(event)
 	}
+}
+
+func FastJsonUnmarshal(data []byte, res *BestBidAskEvent) {
+	length := len(data)
+	for i := 0; i < length; i++ {
+		if data[i] == '"' {
+			i++
+			start := i
+			for i < length && data[i] != '"' {
+				i++
+			}
+			fieldName := data[start:i]
+
+			for i < length && data[i] != ':' {
+				i++
+			}
+
+			for i < length && data[i] != '"' {
+				i++
+			}
+			i++
+
+			valStart := i
+			for i < length && data[i] != '"' {
+				i++
+			}
+			valEnd := i
+
+			if len(fieldName) > 0 {
+				switch fieldName[0] {
+				case 'm': // market
+					res.Market = b2s(data[valStart:valEnd])
+				case 'a': // asset_id
+					res.AssetID = b2s(data[valStart:valEnd])
+				case 'b': // best_bid
+					if fieldName[5] == 'b' {
+						res.BestBid = b2s(data[valStart:valEnd])
+					} else if fieldName[5] == 'a' {
+						res.BestAsk = b2s(data[valStart:valEnd])
+					}
+				case 's': // spread
+					res.Spread = b2s(data[valStart:valEnd])
+				case 't':
+					res.Timestamp = b2s(data[valStart:valEnd])
+				}
+			}
+		}
+	}
+}
+
+func b2s(b []byte) string {
+	return *(*string)(unsafe.Pointer(&b))
 }
