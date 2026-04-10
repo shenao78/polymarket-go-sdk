@@ -7,6 +7,92 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+func isJSONSpace(b byte) bool {
+	return b == ' ' || b == '\t' || b == '\n' || b == '\r'
+}
+
+func jsonKeyEquals(key []byte, lit string) bool {
+	if len(key) != len(lit) {
+		return false
+	}
+	for i := 0; i < len(key); i++ {
+		if key[i] != lit[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// tryParseBestBidAskObject scans a single JSON object and returns true when
+// event_type or type is "best_bid_ask". String fields use b2s and must refer
+// to a stable backing buffer (e.g. a copy of the WebSocket payload).
+func tryParseBestBidAskObject(data []byte, res *BestBidAskEvent) bool {
+	*res = BestBidAskEvent{}
+	var eventType string
+	n := len(data)
+	for i := 0; i < n; i++ {
+		if data[i] != '"' {
+			continue
+		}
+		i++
+		if i >= n {
+			break
+		}
+		keyStart := i
+		for i < n && data[i] != '"' {
+			i++
+		}
+		if i >= n {
+			break
+		}
+		key := data[keyStart:i]
+
+		for i < n && data[i] != ':' {
+			i++
+		}
+		if i >= n {
+			break
+		}
+		i++
+		for i < n && isJSONSpace(data[i]) {
+			i++
+		}
+		if i >= n || data[i] != '"' {
+			continue
+		}
+		i++
+		valStart := i
+		for i < n && data[i] != '"' {
+			i++
+		}
+		if i >= n {
+			break
+		}
+		valEnd := i
+		val := data[valStart:valEnd]
+
+		switch {
+		case jsonKeyEquals(key, "event_type"):
+			eventType = b2s(val)
+		case jsonKeyEquals(key, "type"):
+			eventType = b2s(val)
+		case jsonKeyEquals(key, "market"):
+			res.Market = b2s(val)
+		case jsonKeyEquals(key, "asset_id"):
+			res.AssetID = b2s(val)
+		case jsonKeyEquals(key, "best_bid"):
+			res.BestBid = b2s(val)
+		case jsonKeyEquals(key, "best_ask"):
+			res.BestAsk = b2s(val)
+		case jsonKeyEquals(key, "spread"):
+			res.Spread = b2s(val)
+		case jsonKeyEquals(key, "timestamp"):
+			res.Timestamp = b2s(val)
+		}
+	}
+	return eventType == "best_bid_ask"
+}
+
 func (c *clientImpl) processEvent(raw map[string]interface{}) {
 	eventType, _ := raw["event_type"].(string)
 	if eventType == "" {
@@ -78,8 +164,9 @@ func (c *clientImpl) processEvent(raw map[string]interface{}) {
 		}
 	case "best_bid_ask":
 		var event BestBidAskEvent
-		FastJsonUnmarshal(msgBytes, &event)
-		c.dispatchBestBidAsk(event)
+		if tryParseBestBidAskObject(msgBytes, &event) && event.AssetID != "" {
+			c.dispatchBestBidAsk(event)
+		}
 	case "new_market":
 		var wire struct {
 			ID           string        `json:"id"`
@@ -320,54 +407,6 @@ func (c *clientImpl) dispatchOrder(event OrderEvent) {
 	c.subMu.Unlock()
 	for _, sub := range subs {
 		sub.trySend(event)
-	}
-}
-
-func FastJsonUnmarshal(data []byte, res *BestBidAskEvent) {
-	length := len(data)
-	for i := 0; i < length; i++ {
-		if data[i] == '"' {
-			i++
-			start := i
-			for i < length && data[i] != '"' {
-				i++
-			}
-			fieldName := data[start:i]
-
-			for i < length && data[i] != ':' {
-				i++
-			}
-
-			for i < length && data[i] != '"' {
-				i++
-			}
-			i++
-
-			valStart := i
-			for i < length && data[i] != '"' {
-				i++
-			}
-			valEnd := i
-
-			if len(fieldName) > 0 {
-				switch fieldName[0] {
-				case 'm': // market
-					res.Market = b2s(data[valStart:valEnd])
-				case 'a': // asset_id
-					res.AssetID = b2s(data[valStart:valEnd])
-				case 'b': // best_bid
-					if fieldName[5] == 'b' {
-						res.BestBid = b2s(data[valStart:valEnd])
-					} else if fieldName[5] == 'a' {
-						res.BestAsk = b2s(data[valStart:valEnd])
-					}
-				case 's': // spread
-					res.Spread = b2s(data[valStart:valEnd])
-				case 't':
-					res.Timestamp = b2s(data[valStart:valEnd])
-				}
-			}
-		}
 	}
 }
 

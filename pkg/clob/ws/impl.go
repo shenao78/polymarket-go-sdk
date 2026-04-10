@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -356,6 +357,24 @@ func (c *clientImpl) connectUser() error {
 	return c.connect(c.userURL, c.setUserConn)
 }
 
+// processWSMessageObject handles one top-level JSON object from the wire. BBO
+// payloads skip map decode and re-marshal when the fast path matches.
+func (c *clientImpl) processWSMessageObject(raw []byte) {
+	if bytes.Contains(raw, []byte(`"best_bid_ask"`)) {
+		owned := append([]byte(nil), raw...)
+		var ev BestBidAskEvent
+		if tryParseBestBidAskObject(owned, &ev) && ev.AssetID != "" {
+			c.dispatchBestBidAsk(ev)
+			return
+		}
+	}
+	var rawMap map[string]interface{}
+	if err := json.Unmarshal(raw, &rawMap); err != nil {
+		return
+	}
+	c.processEvent(rawMap)
+}
+
 func (c *clientImpl) readLoop(channel Channel) {
 	// Get the context for this connection to enable proper cancellation
 	ctx := c.getGoroutineContext(channel)
@@ -425,23 +444,22 @@ func (c *clientImpl) readLoop(channel Channel) {
 			logger.Debug("Raw WS Message: %s", string(message))
 		}
 
-		// Parse generic message to determine type
-		var rawObj map[string]interface{}
-		var rawArr []map[string]interface{}
-
-		// Try unmarshal as array first
-		if err := json.Unmarshal(message, &rawArr); err == nil {
-			for _, item := range rawArr {
-				c.processEvent(item)
+		msg := bytes.TrimSpace(message)
+		if len(msg) == 0 {
+			continue
+		}
+		// Array batch: one Unmarshal. Single object: skip a second decode — the frame is already raw JSON.
+		if msg[0] == '[' {
+			var rawArr []json.RawMessage
+			if err := json.Unmarshal(msg, &rawArr); err != nil {
+				continue
+			}
+			for i := range rawArr {
+				c.processWSMessageObject(rawArr[i])
 			}
 			continue
 		}
-
-		// Try unmarshal as single object
-		if err := json.Unmarshal(message, &rawObj); err == nil {
-			c.processEvent(rawObj)
-			continue
-		}
+		c.processWSMessageObject(msg)
 	}
 	if c.closing.Load() {
 		c.shutdown()
