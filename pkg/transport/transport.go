@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	defaultMaxRetries  = 3
+	defaultMaxRetries  = 0
 	defaultMinWait     = 100 * time.Millisecond
 	defaultMaxWait     = 2 * time.Second
 	defaultHTTPTimeout = 30 * time.Second
