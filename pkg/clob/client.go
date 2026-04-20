@@ -169,7 +169,7 @@ type Client interface {
 	// BalanceAllowance retrieves the current balance and exchange allowance for a specific asset.
 	BalanceAllowance(ctx context.Context, req *clobtypes.BalanceAllowanceRequest) (clobtypes.BalanceAllowanceResponse, error)
 	// UpdateBalanceAllowance (Internal use) prepares a request to update the asset allowance.
-	UpdateBalanceAllowance(ctx context.Context, req *clobtypes.BalanceAllowanceUpdateRequest) (clobtypes.BalanceAllowanceResponse, error)
+	UpdateBalanceAllowance(ctx context.Context, req *clobtypes.BalanceAllowanceUpdateRequest) error
 	// Notifications retrieves recent account notifications.
 	Notifications(ctx context.Context, req *clobtypes.NotificationsRequest) (clobtypes.NotificationsResponse, error)
 	// DropNotifications acknowledges and clears a specific notification.

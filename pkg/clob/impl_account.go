@@ -37,7 +37,7 @@ func (c *clientImpl) BalanceAllowance(ctx context.Context, req *clobtypes.Balanc
 	return resp, mapError(err)
 }
 
-func (c *clientImpl) UpdateBalanceAllowance(ctx context.Context, req *clobtypes.BalanceAllowanceUpdateRequest) (clobtypes.BalanceAllowanceResponse, error) {
+func (c *clientImpl) UpdateBalanceAllowance(ctx context.Context, req *clobtypes.BalanceAllowanceUpdateRequest) error {
 	q := url.Values{}
 	if req != nil {
 		if req.Asset != "" {
@@ -61,9 +61,8 @@ func (c *clientImpl) UpdateBalanceAllowance(ctx context.Context, req *clobtypes.
 			q.Set("amount", req.Amount)
 		}
 	}
-	var resp clobtypes.BalanceAllowanceResponse
-	err := c.httpClient.Call(ctx, "GET", "/balance-allowance/update", q, nil, &resp, nil)
-	return resp, mapError(err)
+	err := c.httpClient.Call(ctx, "GET", "/balance-allowance/update", q, nil, nil, nil)
+	return mapError(err)
 }
 
 func (c *clientImpl) Notifications(ctx context.Context, req *clobtypes.NotificationsRequest) (clobtypes.NotificationsResponse, error) {
