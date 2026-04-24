@@ -106,11 +106,9 @@ type RFQAcceptRequest struct {
 	TokenID     string `json:"tokenId,omitempty"`
 	Maker       string `json:"maker,omitempty"`
 	Signer      string `json:"signer,omitempty"`
-	Taker       string `json:"taker,omitempty"`
-	Nonce       string `json:"nonce,omitempty"`
+	Timestamp   string `json:"timestamp,omitempty"`
 	Expiration  string `json:"expiration,omitempty"`
 	Side        string `json:"side,omitempty"`
-	FeeRateBps  string `json:"feeRateBps,omitempty"`
 	Signature   string `json:"signature,omitempty"`
 	Salt        string `json:"salt,omitempty"`
 	Owner       string `json:"owner,omitempty"`
@@ -125,11 +123,9 @@ type RFQApproveQuote struct {
 	TokenID     string `json:"tokenId,omitempty"`
 	Maker       string `json:"maker,omitempty"`
 	Signer      string `json:"signer,omitempty"`
-	Taker       string `json:"taker,omitempty"`
-	Nonce       string `json:"nonce,omitempty"`
+	Timestamp   string `json:"timestamp,omitempty"`
 	Expiration  string `json:"expiration,omitempty"`
 	Side        string `json:"side,omitempty"`
-	FeeRateBps  string `json:"feeRateBps,omitempty"`
 	Signature   string `json:"signature,omitempty"`
 	Salt        string `json:"salt,omitempty"`
 	Owner       string `json:"owner,omitempty"`

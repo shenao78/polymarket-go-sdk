@@ -56,8 +56,8 @@ func BuildRFQAcceptRequestFromSignedOrder(requestID, quoteID string, signed *clo
 	}
 
 	order := signed.Order
-	if order.TokenID.Int == nil || order.Nonce.Int == nil || order.Salt.Int == nil {
-		return nil, fmt.Errorf("order token/nonce/salt are required")
+	if order.TokenID.Int == nil || order.Timestamp.Int == nil || order.Salt.Int == nil {
+		return nil, fmt.Errorf("order token/timestmap/salt are required")
 	}
 
 	expiration := "0"
@@ -74,11 +74,9 @@ func BuildRFQAcceptRequestFromSignedOrder(requestID, quoteID string, signed *clo
 		TokenID:     order.TokenID.Int.String(),
 		Maker:       order.Maker.Hex(),
 		Signer:      order.Signer.Hex(),
-		Taker:       order.Taker.Hex(),
-		Nonce:       order.Nonce.Int.String(),
+		Timestamp:   order.Timestamp.Int.String(),
 		Expiration:  expiration,
 		Side:        order.Side,
-		FeeRateBps:  order.FeeRateBps.String(),
 		Signature:   signed.Signature,
 		Salt:        order.Salt.Int.String(),
 		Owner:       signed.Owner,
@@ -102,8 +100,8 @@ func BuildRFQApproveQuoteFromSignedOrder(requestID, quoteID string, signed *clob
 	}
 
 	order := signed.Order
-	if order.TokenID.Int == nil || order.Nonce.Int == nil || order.Salt.Int == nil {
-		return nil, fmt.Errorf("order token/nonce/salt are required")
+	if order.TokenID.Int == nil || order.Timestamp.Int == nil || order.Salt.Int == nil {
+		return nil, fmt.Errorf("order token/timestamp/salt are required")
 	}
 
 	expiration := "0"
@@ -120,11 +118,9 @@ func BuildRFQApproveQuoteFromSignedOrder(requestID, quoteID string, signed *clob
 		TokenID:     order.TokenID.Int.String(),
 		Maker:       order.Maker.Hex(),
 		Signer:      order.Signer.Hex(),
-		Taker:       order.Taker.Hex(),
-		Nonce:       order.Nonce.Int.String(),
+		Timestamp:   order.Timestamp.Int.String(),
 		Expiration:  expiration,
 		Side:        order.Side,
-		FeeRateBps:  order.FeeRateBps.String(),
 		Signature:   signed.Signature,
 		Salt:        order.Salt.Int.String(),
 		Owner:       signed.Owner,

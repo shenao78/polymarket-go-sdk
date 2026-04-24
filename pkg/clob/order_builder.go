@@ -19,19 +19,17 @@ type OrderBuilder struct {
 	client Client
 	signer auth.Signer
 
-	tokenID    string
-	side       string
-	price      decimal.Decimal
-	size       decimal.Decimal
-	feeRateBps decimal.Decimal
-	tickSize   float64
-	orderType  clobtypes.OrderType
+	tokenID   string
+	side      string
+	price     decimal.Decimal
+	size      decimal.Decimal
+	tickSize  float64
+	orderType clobtypes.OrderType
 
 	// Optional overrides
 	maker         *common.Address
 	funder        *common.Address
-	taker         *common.Address
-	nonce         *big.Int
+	timestamp     *big.Int
 	expiration    *big.Int
 	signatureType *auth.SignatureType
 	postOnly      *bool
@@ -113,39 +111,21 @@ func (b *OrderBuilder) SizeDec(size decimal.Decimal) *OrderBuilder {
 	return b
 }
 
-// FeeRateBps sets the fee rate in basis points using a float64 (default 0).
-func (b *OrderBuilder) FeeRateBps(bps float64) *OrderBuilder {
-	b.feeRateBps = decimal.NewFromFloat(bps)
-	return b
-}
-
-// FeeRateBpsDec sets the fee rate in basis points using a decimal.Decimal.
-func (b *OrderBuilder) FeeRateBpsDec(bps decimal.Decimal) *OrderBuilder {
-	b.feeRateBps = bps
-	return b
-}
-
 // TickSize sets a manual tick size override (e.g. "0.01").
 func (b *OrderBuilder) TickSize(tickSize float64) *OrderBuilder {
 	b.tickSize = tickSize
 	return b
 }
 
-// Nonce overrides the order nonce.
-func (b *OrderBuilder) Nonce(nonce *big.Int) *OrderBuilder {
-	b.nonce = nonce
+// Timestamp overrides the order timestamp.
+func (b *OrderBuilder) Timestamp(t *big.Int) *OrderBuilder {
+	b.timestamp = t
 	return b
 }
 
 // Maker overrides the maker address.
 func (b *OrderBuilder) Maker(maker common.Address) *OrderBuilder {
 	b.maker = &maker
-	return b
-}
-
-// Taker overrides the taker address.
-func (b *OrderBuilder) Taker(taker common.Address) *OrderBuilder {
-	b.taker = &taker
 	return b
 }
 
@@ -311,11 +291,6 @@ func (b *OrderBuilder) BuildMarketWithContext(ctx context.Context) (*clobtypes.S
 		return nil, fmt.Errorf("price %s is out of bounds for tick size %s", price.String(), tickSize.String())
 	}
 
-	feeRateBps, err := b.resolveFeeRateBps(ctx, b.tokenID)
-	if err != nil {
-		return nil, err
-	}
-
 	truncScale := tickScale + lotSizeScale
 	rawAmount := b.amount.value
 	var makerAmount, takerAmount decimal.Decimal
@@ -361,14 +336,8 @@ func (b *OrderBuilder) BuildMarketWithContext(ctx context.Context) (*clobtypes.S
 		maker = derived
 	}
 
-	taker := common.HexToAddress("0x0000000000000000000000000000000000000000")
-	if b.taker != nil {
-		taker = *b.taker
-	}
-
-	nonce := big.NewInt(0)
-	if b.nonce != nil {
-		nonce = b.nonce
+	if b.timestamp == nil {
+		return nil, fmt.Errorf("timestamp cannot be nil")
 	}
 
 	salt, err := b.generateSalt()
@@ -380,14 +349,12 @@ func (b *OrderBuilder) BuildMarketWithContext(ctx context.Context) (*clobtypes.S
 		Salt:          types.U256{Int: salt},
 		Signer:        b.signer.Address(),
 		Maker:         maker,
-		Taker:         taker,
 		TokenID:       types.U256{Int: tokenIDInt},
 		MakerAmount:   types.Decimal(makerFixed),
 		TakerAmount:   types.Decimal(takerFixed),
 		Expiration:    types.U256{Int: big.NewInt(0)},
 		Side:          side,
-		FeeRateBps:    types.Decimal(decimal.NewFromInt(feeRateBps)),
-		Nonce:         types.U256{Int: nonce},
+		Timestamp:     types.U256{Int: b.timestamp},
 		SignatureType: &sigType,
 	}
 
@@ -443,11 +410,6 @@ func (b *OrderBuilder) buildLimit(ctx context.Context) (*clobtypes.Order, error)
 		return nil, fmt.Errorf("size must be positive")
 	}
 
-	feeRateBps, err := b.resolveFeeRateBps(ctx, b.tokenID)
-	if err != nil {
-		return nil, err
-	}
-
 	truncScale := tickScale + lotSizeScale
 	var makerAmount, takerAmount decimal.Decimal
 	if side == "BUY" {
@@ -485,14 +447,8 @@ func (b *OrderBuilder) buildLimit(ctx context.Context) (*clobtypes.Order, error)
 		maker = derived
 	}
 
-	taker := common.HexToAddress("0x0000000000000000000000000000000000000000")
-	if b.taker != nil {
-		taker = *b.taker
-	}
-
-	nonce := big.NewInt(0)
-	if b.nonce != nil {
-		nonce = b.nonce
+	if b.timestamp == nil {
+		return nil, fmt.Errorf("timestamp cannot be nil")
 	}
 
 	salt, err := b.generateSalt()
@@ -512,14 +468,12 @@ func (b *OrderBuilder) buildLimit(ctx context.Context) (*clobtypes.Order, error)
 		Salt:          types.U256{Int: salt},
 		Signer:        b.signer.Address(),
 		Maker:         maker,
-		Taker:         taker,
 		TokenID:       types.U256{Int: tokenIDInt},
 		MakerAmount:   types.Decimal(makerFixed),
 		TakerAmount:   types.Decimal(takerFixed),
 		Expiration:    types.U256{Int: expiration},
 		Side:          side,
-		FeeRateBps:    types.Decimal(decimal.NewFromInt(feeRateBps)),
-		Nonce:         types.U256{Int: nonce},
+		Timestamp:     types.U256{Int: b.timestamp},
 		SignatureType: &sigType,
 	}, nil
 }

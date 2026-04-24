@@ -478,15 +478,13 @@ type (
 		Salt          types.U256    `json:"salt"`
 		Signer        types.Address `json:"signer"`
 		Maker         types.Address `json:"maker"`
-		Taker         types.Address `json:"taker"`
 		TokenID       types.U256    `json:"token_id"`
 		MakerAmount   types.Decimal `json:"maker_amount"`
 		TakerAmount   types.Decimal `json:"taker_amount"`
 		Expiration    types.U256    `json:"expiration"`
-		Side          string        `json:"side"` // BUY/SELL
-		FeeRateBps    types.Decimal `json:"fee_rate_bps"`
-		Nonce         types.U256    `json:"nonce"`
+		Side          string        `json:"side"`                     // BUY/SELL
 		SignatureType *int          `json:"signature_type,omitempty"` // 0=EOA, 1=Proxy, 2=Safe
+		Timestamp     types.U256    `json:"timestamp"`
 	}
 
 	PriceHistoryPoint struct {

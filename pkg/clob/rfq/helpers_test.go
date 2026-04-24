@@ -93,8 +93,8 @@ func TestBuildRFQAcceptRequestFromSignedOrder(t *testing.T) {
 	if req.RequestID != "req-1" || req.QuoteIDV2 != "quote-1" {
 		t.Fatalf("request/quote IDs mismatch")
 	}
-	if req.TokenID != "123" || req.Nonce != "10" {
-		t.Fatalf("order fields mismatch: token=%s nonce=%s", req.TokenID, req.Nonce)
+	if req.TokenID != "123" || req.Timestamp != "10" {
+		t.Fatalf("order fields mismatch: token=%s nonce=%s", req.TokenID, req.Timestamp)
 	}
 }
 

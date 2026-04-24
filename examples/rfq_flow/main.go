@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/GoPolymarket/polymarket-go-sdk/pkg/clob/clobtypes"
 	"context"
 	"fmt"
+	"github.com/GoPolymarket/polymarket-go-sdk/pkg/clob/clobtypes"
 	"log"
 	"os"
 	"strconv"
@@ -12,8 +12,8 @@ import (
 	polymarket "github.com/GoPolymarket/polymarket-go-sdk"
 	"github.com/GoPolymarket/polymarket-go-sdk/pkg/auth"
 	"github.com/GoPolymarket/polymarket-go-sdk/pkg/clob"
-	
-"github.com/GoPolymarket/polymarket-go-sdk/pkg/clob/rfq"
+
+	"github.com/GoPolymarket/polymarket-go-sdk/pkg/clob/rfq"
 )
 
 func main() {
@@ -254,7 +254,7 @@ func loadAcceptRequestFromEnv() *rfq.RFQAcceptRequest {
 		Maker:       maker,
 		Signer:      signer,
 		Taker:       taker,
-		Nonce:       nonce,
+		Timestamp:   nonce,
 		Expiration:  expiration,
 		Side:        side,
 		FeeRateBps:  feeRate,
@@ -294,7 +294,7 @@ func loadApproveRequestFromEnv() *rfq.RFQApproveQuote {
 		Maker:       maker,
 		Signer:      signer,
 		Taker:       taker,
-		Nonce:       nonce,
+		Timestamp:   nonce,
 		Expiration:  expiration,
 		Side:        side,
 		FeeRateBps:  feeRate,
