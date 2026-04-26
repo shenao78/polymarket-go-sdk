@@ -168,10 +168,10 @@ func (b *OrderBuilder) ExpirationUnix(timestamp int64) *OrderBuilder {
 }
 
 // AmountUSDC sets the amount for a market order in USDC.
-func (b *OrderBuilder) AmountUSDC(amount float64) *OrderBuilder {
+func (b *OrderBuilder) AmountUSDC(amount decimal.Decimal) *OrderBuilder {
 	b.amount = &marketAmount{
 		kind:  amountUSDC,
-		value: decimal.NewFromFloat(amount),
+		value: amount,
 	}
 	return b
 }
