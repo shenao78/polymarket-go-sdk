@@ -48,7 +48,7 @@ func TestBuildMarketAmountSharesValidation(t *testing.T) {
 	_, err := NewOrderBuilder(stub, mustSigner(t)).
 		TokenID("123").
 		Side("SELL").
-		AmountShares(1.234).
+		AmountShares(decimal.NewFromFloat(1.234)).
 		OrderType(clobtypes.OrderTypeFAK).
 		BuildMarket()
 	if err == nil || !strings.Contains(err.Error(), "amount has too many decimal places") {
