@@ -31,7 +31,7 @@ func TestBuildMarketPriceValidation(t *testing.T) {
 	_, err := NewOrderBuilder(stub, mustSigner(t)).
 		TokenID("123").
 		Side("BUY").
-		AmountUSDC(10).
+		AmountUSDC(decimal.NewFromInt(10)).
 		OrderType(clobtypes.OrderTypeFAK).
 		Price(0.123).
 		BuildMarket()
@@ -48,7 +48,7 @@ func TestBuildMarketAmountSharesValidation(t *testing.T) {
 	_, err := NewOrderBuilder(stub, mustSigner(t)).
 		TokenID("123").
 		Side("SELL").
-		AmountShares(1.234).
+		AmountShares(decimal.NewFromFloat(1.234)).
 		OrderType(clobtypes.OrderTypeFAK).
 		BuildMarket()
 	if err == nil || !strings.Contains(err.Error(), "amount has too many decimal places") {
@@ -64,7 +64,7 @@ func TestBuildMarketAmountUSDCValidation(t *testing.T) {
 	_, err := NewOrderBuilder(stub, mustSigner(t)).
 		TokenID("123").
 		Side("BUY").
-		AmountUSDC(0.0000001).
+		AmountUSDC(decimal.NewFromFloat(0.0000001)).
 		OrderType(clobtypes.OrderTypeFAK).
 		BuildMarket()
 	if err == nil || !strings.Contains(err.Error(), "amount has too many decimal places") {
@@ -87,7 +87,7 @@ func TestBuildMarketUsesOrderBookDepth(t *testing.T) {
 	signable, err := NewOrderBuilder(stub, mustSigner(t)).
 		TokenID("123").
 		Side("BUY").
-		AmountUSDC(50).
+		AmountUSDC(decimal.NewFromInt(50)).
 		OrderType(clobtypes.OrderTypeFAK).
 		BuildMarket()
 	if err != nil {
@@ -118,7 +118,7 @@ func TestBuildMarketFOKInsufficientLiquidity(t *testing.T) {
 	_, err := NewOrderBuilder(stub, mustSigner(t)).
 		TokenID("123").
 		Side("BUY").
-		AmountUSDC(100).
+		AmountUSDC(decimal.NewFromInt(100)).
 		OrderType(clobtypes.OrderTypeFOK).
 		BuildMarket()
 	if err == nil || !strings.Contains(err.Error(), "insufficient liquidity") {
@@ -140,7 +140,7 @@ func TestBuildMarketFAKUsesTopPriceWhenInsufficient(t *testing.T) {
 	signable, err := NewOrderBuilder(stub, mustSigner(t)).
 		TokenID("123").
 		Side("BUY").
-		AmountUSDC(100).
+		AmountUSDC(decimal.NewFromInt(100)).
 		OrderType(clobtypes.OrderTypeFAK).
 		BuildMarket()
 	if err != nil {
@@ -212,7 +212,7 @@ func TestBuildLimitOrder(t *testing.T) {
 			Side("BUY").
 			Price(0.5).
 			Size(10).
-			AmountUSDC(5)
+			AmountUSDC(decimal.NewFromInt(5))
 
 		// Test Proxy
 		signable, err := builder.UseProxy().BuildMarketWithContext(ctx)

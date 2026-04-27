@@ -105,7 +105,7 @@ func (e *Engine) ExecutePlan(ctx context.Context, plan *TradePlan) (clobtypes.Or
 	builder := clob.NewOrderBuilder(e.client, e.signer).
 		TokenID(plan.TokenID).
 		Side(plan.Side).
-		AmountUSDC(plan.AmountUSDC.InexactFloat64()).
+		AmountUSDC(plan.AmountUSDC).
 		PriceDec(plan.MaxAcceptedPrice).
 		OrderType(clobtypes.OrderTypeFAK)
 

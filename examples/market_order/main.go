@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/GoPolymarket/polymarket-go-sdk/pkg/clob/clobtypes"
+	"github.com/shopspring/decimal"
+
 	"context"
 	"fmt"
 	"log"
@@ -10,7 +12,6 @@ import (
 	polymarket "github.com/GoPolymarket/polymarket-go-sdk"
 	"github.com/GoPolymarket/polymarket-go-sdk/pkg/auth"
 	"github.com/GoPolymarket/polymarket-go-sdk/pkg/clob"
-	
 )
 
 func main() {
@@ -36,7 +37,7 @@ func main() {
 	signable, err := clob.NewOrderBuilder(authClient, signer).
 		TokenID("1234567890").
 		Side("BUY").
-		AmountUSDC(100).
+		AmountUSDC(decimal.NewFromInt(100)).
 		OrderType(clobtypes.OrderTypeFAK).
 		BuildMarket()
 	if err != nil {
