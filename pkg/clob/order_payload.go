@@ -96,8 +96,8 @@ func orderWithSignature(order *clobtypes.SignedOrder) (string, error) {
 		"\"signatureType\":" + strconv.Itoa(sigType) + "," +
 		"\"signer\":\"" + order.Order.Signer.Hex() + "\"," +
 		"\"takerAmount\":\"" + decimalString(order.Order.TakerAmount) + "\"," +
-		"\"tokenId\":\"" + u256String(order.Order.TokenID) + "\"" +
-		"\"metadata\": \"0x0000000000000000000000000000000000000000000000000000000000000000\"" +
+		"\"tokenId\":\"" + u256String(order.Order.TokenID) + "\"," +
+		"\"metadata\": \"0x0000000000000000000000000000000000000000000000000000000000000000\"," +
 		"\"builder\": \"0x0000000000000000000000000000000000000000000000000000000000000000\"" +
 		"}", nil
 }
