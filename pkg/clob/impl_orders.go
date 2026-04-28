@@ -117,6 +117,7 @@ func signOrderWithCreds(signer auth.Signer, apiKey *auth.APIKey, order *clobtype
 			{Name: "takerAmount", Type: "uint256"},
 			{Name: "expiration", Type: "uint256"},
 			{Name: "side", Type: "uint8"},
+			{Name: "signatureType", Type: "uint8"},
 			{Name: "timestamp", Type: "uint256"},
 			{Name: "metadata", Type: "bytes32"},
 			{Name: "builder", Type: "bytes32"},
