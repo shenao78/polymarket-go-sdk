@@ -107,7 +107,6 @@ type RFQAcceptRequest struct {
 	Maker       string `json:"maker,omitempty"`
 	Signer      string `json:"signer,omitempty"`
 	Timestamp   string `json:"timestamp,omitempty"`
-	Expiration  string `json:"expiration,omitempty"`
 	Side        string `json:"side,omitempty"`
 	Signature   string `json:"signature,omitempty"`
 	Salt        string `json:"salt,omitempty"`
@@ -124,7 +123,6 @@ type RFQApproveQuote struct {
 	Maker       string `json:"maker,omitempty"`
 	Signer      string `json:"signer,omitempty"`
 	Timestamp   string `json:"timestamp,omitempty"`
-	Expiration  string `json:"expiration,omitempty"`
 	Side        string `json:"side,omitempty"`
 	Signature   string `json:"signature,omitempty"`
 	Salt        string `json:"salt,omitempty"`

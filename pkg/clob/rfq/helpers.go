@@ -60,11 +60,6 @@ func BuildRFQAcceptRequestFromSignedOrder(requestID, quoteID string, signed *clo
 		return nil, fmt.Errorf("order token/timestmap/salt are required")
 	}
 
-	expiration := "0"
-	if order.Expiration.Int != nil {
-		expiration = order.Expiration.Int.String()
-	}
-
 	req := &RFQAcceptRequest{
 		RequestID:   requestID,
 		QuoteID:     quoteID,
@@ -75,7 +70,6 @@ func BuildRFQAcceptRequestFromSignedOrder(requestID, quoteID string, signed *clo
 		Maker:       order.Maker.Hex(),
 		Signer:      order.Signer.Hex(),
 		Timestamp:   order.Timestamp.Int.String(),
-		Expiration:  expiration,
 		Side:        order.Side,
 		Signature:   signed.Signature,
 		Salt:        order.Salt.Int.String(),
@@ -104,11 +98,6 @@ func BuildRFQApproveQuoteFromSignedOrder(requestID, quoteID string, signed *clob
 		return nil, fmt.Errorf("order token/timestamp/salt are required")
 	}
 
-	expiration := "0"
-	if order.Expiration.Int != nil {
-		expiration = order.Expiration.Int.String()
-	}
-
 	req := &RFQApproveQuote{
 		RequestID:   requestID,
 		QuoteID:     quoteID,
@@ -119,7 +108,6 @@ func BuildRFQApproveQuoteFromSignedOrder(requestID, quoteID string, signed *clob
 		Maker:       order.Maker.Hex(),
 		Signer:      order.Signer.Hex(),
 		Timestamp:   order.Timestamp.Int.String(),
-		Expiration:  expiration,
 		Side:        order.Side,
 		Signature:   signed.Signature,
 		Salt:        order.Salt.Int.String(),

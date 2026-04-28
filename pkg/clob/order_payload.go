@@ -87,7 +87,6 @@ func orderWithSignature(order *clobtypes.SignedOrder) (string, error) {
 
 	saltStr := strconv.FormatUint(salt.(uint64), 10)
 	return "{" +
-		"\"expiration\":\"" + u256String(order.Order.Expiration) + "\"," +
 		"\"maker\":\"" + order.Order.Maker.Hex() + "\"," +
 		"\"makerAmount\":\"" + decimalString(order.Order.MakerAmount) + "\"," +
 		"\"timestamp\":\"" + u256String(order.Order.Timestamp) + "\"," +
@@ -98,6 +97,8 @@ func orderWithSignature(order *clobtypes.SignedOrder) (string, error) {
 		"\"signer\":\"" + order.Order.Signer.Hex() + "\"," +
 		"\"takerAmount\":\"" + decimalString(order.Order.TakerAmount) + "\"," +
 		"\"tokenId\":\"" + u256String(order.Order.TokenID) + "\"" +
+		"\"metadata\": \"0x0000000000000000000000000000000000000000000000000000000000000000\"" +
+		"\"builder\": \"0x0000000000000000000000000000000000000000000000000000000000000000\"" +
 		"}", nil
 }
 

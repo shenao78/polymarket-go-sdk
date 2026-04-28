@@ -352,7 +352,6 @@ func (b *OrderBuilder) BuildMarketWithContext(ctx context.Context) (*clobtypes.S
 		TokenID:       types.U256{Int: tokenIDInt},
 		MakerAmount:   types.Decimal(makerFixed),
 		TakerAmount:   types.Decimal(takerFixed),
-		Expiration:    types.U256{Int: big.NewInt(0)},
 		Side:          side,
 		Timestamp:     types.U256{Int: b.timestamp},
 		SignatureType: &sigType,
@@ -456,14 +455,6 @@ func (b *OrderBuilder) buildLimit(ctx context.Context) (*clobtypes.Order, error)
 		return nil, err
 	}
 
-	expiration := big.NewInt(0)
-	if b.expiration != nil {
-		if b.expiration.Sign() < 0 {
-			return nil, fmt.Errorf("expiration must be non-negative")
-		}
-		expiration = b.expiration
-	}
-
 	return &clobtypes.Order{
 		Salt:          types.U256{Int: salt},
 		Signer:        b.signer.Address(),
@@ -471,7 +462,6 @@ func (b *OrderBuilder) buildLimit(ctx context.Context) (*clobtypes.Order, error)
 		TokenID:       types.U256{Int: tokenIDInt},
 		MakerAmount:   types.Decimal(makerFixed),
 		TakerAmount:   types.Decimal(takerFixed),
-		Expiration:    types.U256{Int: expiration},
 		Side:          side,
 		Timestamp:     types.U256{Int: b.timestamp},
 		SignatureType: &sigType,

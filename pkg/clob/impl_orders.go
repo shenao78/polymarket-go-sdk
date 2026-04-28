@@ -115,7 +115,6 @@ func signOrderWithCreds(signer auth.Signer, apiKey *auth.APIKey, order *clobtype
 			{Name: "tokenId", Type: "uint256"},
 			{Name: "makerAmount", Type: "uint256"},
 			{Name: "takerAmount", Type: "uint256"},
-			{Name: "expiration", Type: "uint256"},
 			{Name: "side", Type: "uint8"},
 			{Name: "signatureType", Type: "uint8"},
 			{Name: "timestamp", Type: "uint256"},
@@ -143,11 +142,6 @@ func signOrderWithCreds(signer auth.Signer, apiKey *auth.APIKey, order *clobtype
 		order.Salt = types.U256{Int: salt}
 	}
 
-	expiration := big.NewInt(0)
-	if order.Expiration.Int != nil {
-		expiration = order.Expiration.Int
-	}
-
 	message := apitypes.TypedDataMessage{
 		"salt":          (*math.HexOrDecimal256)(order.Salt.Int),
 		"maker":         order.Maker.String(),
@@ -155,7 +149,6 @@ func signOrderWithCreds(signer auth.Signer, apiKey *auth.APIKey, order *clobtype
 		"tokenId":       (*math.HexOrDecimal256)(order.TokenID.Int),
 		"makerAmount":   (*math.HexOrDecimal256)(order.MakerAmount.BigInt()),
 		"takerAmount":   (*math.HexOrDecimal256)(order.TakerAmount.BigInt()),
-		"expiration":    (*math.HexOrDecimal256)(expiration),
 		"side":          (*math.HexOrDecimal256)(big.NewInt(int64(sideInt))),
 		"signatureType": (*math.HexOrDecimal256)(big.NewInt(int64(sigTypeVal))),
 		"timestamp":     (*math.HexOrDecimal256)(order.Timestamp.Int),
