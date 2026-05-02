@@ -492,21 +492,34 @@ type (
 	}
 
 	Trade struct {
-		ID              string `json:"id"`
-		Price           string `json:"price"`
-		Size            string `json:"size"`
-		Side            string `json:"side"`
-		Timestamp       int64  `json:"timestamp"`
-		Market          string `json:"market,omitempty"`
-		AssetID         string `json:"asset_id,omitempty"`
-		Status          string `json:"status,omitempty"`
-		TakerOrderID    string `json:"taker_order_id,omitempty"`
-		MakerOrderID    string `json:"maker_order_id,omitempty"`
-		Owner           string `json:"owner,omitempty"`
-		MakerAddress    string `json:"maker_address,omitempty"`
-		MatchTime       string `json:"match_time,omitempty"`
-		FeeRateBps      string `json:"fee_rate_bps,omitempty"`
-		TransactionHash string `json:"transaction_hash,omitempty"`
+		ID              string       `json:"id"`
+		Price           string       `json:"price"`
+		Size            string       `json:"size"`
+		Side            string       `json:"side"`
+		Timestamp       int64        `json:"timestamp"`
+		Market          string       `json:"market,omitempty"`
+		AssetID         string       `json:"asset_id,omitempty"`
+		Status          string       `json:"status,omitempty"` // CONFIRMED
+		TakerOrderID    string       `json:"taker_order_id,omitempty"`
+		Owner           string       `json:"owner,omitempty"`
+		MatchTime       string       `json:"match_time,omitempty"`
+		LastUpdate      string       `json:"last_update,omitempty"`
+		Outcome         string       `json:"outcome,omitempty"`
+		FeeRateBps      string       `json:"fee_rate_bps,omitempty"`
+		TransactionHash string       `json:"transaction_hash,omitempty"`
+		MakerOrders     []MakerOrder `json:"maker_orders,omitempty"`
+		TradeSide       string       `json:"trade_side"` // TAKER
+	}
+
+	MakerOrder struct {
+		OrderID       string `json:"order_id"`
+		Owner         string `json:"owner"`
+		MakerAddress  string `json:"maker_address"`
+		MatchedAmount string `json:"matched_amount"`
+		Price         string `json:"price"`
+		AssetID       string `json:"asset_id"`
+		Outcome       string `json:"outcome"`
+		Side          string `json:"side"` // BUY
 	}
 
 	Notification struct {
