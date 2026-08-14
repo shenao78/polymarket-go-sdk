@@ -3,6 +3,8 @@ package rtds
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -203,5 +205,59 @@ func TestSubscribeTWAPPrices_MultipleSymbolsOmitsFilter(t *testing.T) {
 		}
 	case <-time.After(2 * time.Second):
 		t.Fatal("timed out waiting for subscribe frame")
+	}
+}
+
+// TestLiveBTCUSDTwap30 connects to production RTDS and prints btc/usd 30s TWAP updates.
+// Run with:
+//
+//	RTDS_LIVE=1 go test -v -timeout 0 -run TestLiveBTCUSDTwap30 ./pkg/rtds/
+func TestLiveBTCUSDTwap30(t *testing.T) {
+	if os.Getenv("RTDS_LIVE") == "" {
+		t.Skip("set RTDS_LIVE=1 to stream live btc/usd 30s TWAP prices")
+	}
+
+	client, err := NewClient("")
+	if err != nil {
+		t.Fatalf("connect RTDS: %v", err)
+	}
+	defer client.Close()
+
+	stream, err := client.SubscribeTWAPPricesStream(t.Context(), TWAPWindow30, []string{"btc/usd"})
+	if err != nil {
+		t.Fatalf("subscribe TWAP: %v", err)
+	}
+	defer stream.Close()
+
+	fmt.Println("streaming btc/usd 30s TWAP; Ctrl+C or test timeout to stop")
+	for {
+		select {
+		case <-t.Context().Done():
+			return
+		case err, ok := <-stream.Err:
+			if !ok {
+				return
+			}
+			if err != nil {
+				fmt.Printf("twap stream error: %v\n", err)
+			}
+		case ev, ok := <-stream.C:
+			if !ok {
+				return
+			}
+			exact, err := ev.ExactValue()
+			if err != nil {
+				exact = ev.Value
+			}
+			fmt.Printf(
+				"[TWAP %ds] %s value=%s exact=%s observed=%s full_accuracy=%s\n",
+				ev.WindowS,
+				ev.Symbol,
+				ev.Value.String(),
+				exact.String(),
+				time.UnixMilli(ev.Timestamp).UTC().Format(time.RFC3339Nano),
+				ev.FullAccuracyValue,
+			)
+		}
 	}
 }
