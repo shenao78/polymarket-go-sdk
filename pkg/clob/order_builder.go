@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/shopspring/decimal"
@@ -364,51 +365,16 @@ func (b *OrderBuilder) BuildMarketWithContext(ctx context.Context) (*clobtypes.S
 }
 
 func (b *OrderBuilder) buildLimit(ctx context.Context) (*clobtypes.Order, error) {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	if b.tokenID == "" {
-		return nil, fmt.Errorf("token_id is required")
-	}
-	side := strings.ToUpper(strings.TrimSpace(b.side))
-	if side != "BUY" && side != "SELL" {
-		return nil, fmt.Errorf("side must be BUY or SELL")
-	}
-	if b.price.Sign() <= 0 {
-		return nil, fmt.Errorf("price must be positive")
-	}
-	if b.size.Sign() <= 0 {
-		return nil, fmt.Errorf("size must be positive")
-	}
-
+	side := b.side
 	tokenIDInt, ok := new(big.Int).SetString(b.tokenID, 10)
 	if !ok {
 		return nil, fmt.Errorf("invalid token_id format")
 	}
-
-	tickSize, err := b.resolveTickSize(ctx, b.tokenID)
-	if err != nil {
-		return nil, err
-	}
+	tickSize := decimal.NewFromFloat(b.tickSize)
 	tickScale := decimalPlaces(tickSize)
 
 	price := b.price
-	if decimalPlaces(price) > tickScale {
-		return nil, fmt.Errorf("price has too many decimal places for tick size %s", tickSize.String())
-	}
-	one := decimal.NewFromInt(1)
-	if price.LessThan(tickSize) || price.GreaterThan(one.Sub(tickSize)) {
-		return nil, fmt.Errorf("price %s is out of bounds for tick size %s", price.String(), tickSize.String())
-	}
-
 	size := b.size
-	if decimalPlaces(size) > lotSizeScale {
-		return nil, fmt.Errorf("size has too many decimal places (max %d)", lotSizeScale)
-	}
-	if size.Sign() <= 0 {
-		return nil, fmt.Errorf("size must be positive")
-	}
-
 	truncScale := tickScale + lotSizeScale
 	var makerAmount, takerAmount decimal.Decimal
 	if side == "BUY" {
@@ -422,38 +388,15 @@ func (b *OrderBuilder) buildLimit(ctx context.Context) (*clobtypes.Order, error)
 	makerFixed := toFixedDecimal(makerAmount)
 	takerFixed := toFixedDecimal(takerAmount)
 
-	sigType := int(auth.SignatureEOA)
-	if b.signatureType != nil {
-		sigType = int(*b.signatureType)
-	}
+	sigType := int(auth.SignatureGnosisSafe)
+	maker := *b.funder
 
-	var maker common.Address
-	if b.maker != nil {
-		maker = *b.maker
-	} else if b.funder != nil {
-		if sigType == int(auth.SignatureEOA) {
-			return nil, fmt.Errorf("funder requires non-EOA signature type")
-		}
-		if *b.funder == (common.Address{}) {
-			return nil, fmt.Errorf("funder cannot be zero address")
-		}
-		maker = *b.funder
-	} else {
-		derived, err := deriveMakerFromSignature(b.signer, sigType)
-		if err != nil {
-			return nil, err
-		}
-		maker = derived
-	}
-
-	if b.timestamp == nil {
-		return nil, fmt.Errorf("timestamp cannot be nil")
-	}
-
+	now := time.Now()
 	salt, err := b.generateSalt()
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(time.Since(now).Microseconds(), "us")
 
 	return &clobtypes.Order{
 		Salt:          types.U256{Int: salt},

@@ -2,10 +2,14 @@ package rtds
 
 import (
 	"encoding/json"
+	"fmt"
+	"math/big"
+	"strings"
 	"time"
 
 	"github.com/GoPolymarket/polymarket-go-sdk/pkg/auth"
 	"github.com/GoPolymarket/polymarket-go-sdk/pkg/types"
+	"github.com/shopspring/decimal"
 )
 
 // ConnectionState represents RTDS connection status.
@@ -47,8 +51,8 @@ type Subscription struct {
 }
 
 // MarshalJSON customizes filters encoding to align with RTDS expectations.
-// For non-Chainlink topics, JSON strings are parsed and sent as raw JSON.
-// Chainlink filters are always serialized as a JSON string.
+// For most topics, JSON strings are parsed and sent as raw JSON.
+// Chainlink and TWAP filters must remain a compact JSON string.
 func (s Subscription) MarshalJSON() ([]byte, error) {
 	payload := map[string]interface{}{
 		"topic": s.Topic,
@@ -56,7 +60,7 @@ func (s Subscription) MarshalJSON() ([]byte, error) {
 	}
 	if s.Filters != nil {
 		filters := s.Filters
-		if raw, ok := s.Filters.(string); ok && s.Topic != string(ChainlinkPrice) {
+		if raw, ok := s.Filters.(string); ok && !keepFiltersAsJSONString(s.Topic) {
 			var parsed interface{}
 			if err := json.Unmarshal([]byte(raw), &parsed); err == nil {
 				filters = parsed
@@ -87,11 +91,37 @@ type ClobAuth struct {
 type EventType string
 
 const (
-	CryptoPrice    EventType = "crypto_prices"
-	ChainlinkPrice EventType = "crypto_prices_chainlink"
-	Comments       EventType = "comments"
-	Activity       EventType = "activity"
+	CryptoPrice           EventType = "crypto_prices"
+	ChainlinkPrice        EventType = "crypto_prices_chainlink"
+	CryptoPriceTWAPThirty EventType = "crypto_prices_twap_thirty"
+	CryptoPriceTWAPSixty  EventType = "crypto_prices_twap_sixty"
+	Comments              EventType = "comments"
+	Activity              EventType = "activity"
 )
+
+// TWAP lookback windows supported by RTDS.
+const (
+	TWAPWindow30 = 30
+	TWAPWindow60 = 60
+)
+
+func keepFiltersAsJSONString(topic string) bool {
+	if topic == string(ChainlinkPrice) {
+		return true
+	}
+	return strings.HasPrefix(topic, "crypto_prices_twap_")
+}
+
+func twapTopic(windowSeconds int) (EventType, error) {
+	switch windowSeconds {
+	case TWAPWindow30:
+		return CryptoPriceTWAPThirty, nil
+	case TWAPWindow60:
+		return CryptoPriceTWAPSixty, nil
+	default:
+		return "", fmt.Errorf("unsupported TWAP window %d: must be 30 or 60", windowSeconds)
+	}
+}
 
 // BaseEvent carries message metadata.
 type BaseEvent struct {
@@ -114,6 +144,30 @@ type ChainlinkPriceEvent struct {
 	Symbol    string        `json:"symbol"`
 	Timestamp int64         `json:"timestamp"`
 	Value     types.Decimal `json:"value"`
+}
+
+// TWAPPriceEvent is a Chainlink TWAP price update from RTDS.
+type TWAPPriceEvent struct {
+	BaseEvent
+	Symbol            string        `json:"symbol"`
+	Timestamp         int64         `json:"timestamp"`
+	Value             types.Decimal `json:"value"`
+	FullAccuracyValue string        `json:"full_accuracy_value"`
+	WindowS           int           `json:"window_s"`
+}
+
+// ExactValue returns the signed E18 TWAP as a decimal.
+// Prefer this over Value, which is only for display convenience.
+func (e TWAPPriceEvent) ExactValue() (types.Decimal, error) {
+	raw := strings.TrimSpace(e.FullAccuracyValue)
+	if raw == "" {
+		return e.Value, nil
+	}
+	n, ok := new(big.Int).SetString(raw, 10)
+	if !ok {
+		return types.Decimal{}, fmt.Errorf("invalid full_accuracy_value %q", e.FullAccuracyValue)
+	}
+	return decimal.NewFromBigInt(n, -18), nil
 }
 
 // CommentType enumerates comment event types.

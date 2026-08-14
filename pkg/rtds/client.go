@@ -15,16 +15,19 @@ type Client interface {
 
 	SubscribeCryptoPricesStream(ctx context.Context, symbols []string) (*Stream[CryptoPriceEvent], error)
 	SubscribeChainlinkPricesStream(ctx context.Context, feeds []string) (*Stream[ChainlinkPriceEvent], error)
+	SubscribeTWAPPricesStream(ctx context.Context, windowSeconds int, symbols []string) (*Stream[TWAPPriceEvent], error)
 	SubscribeCommentsStream(ctx context.Context, req *CommentFilter) (*Stream[CommentEvent], error)
 	SubscribeOrdersMatchedStream(ctx context.Context) (*Stream[OrdersMatchedEvent], error)
 	SubscribeRawStream(ctx context.Context, sub *Subscription) (*Stream[RtdsMessage], error)
 	SubscribeCryptoPrices(ctx context.Context, symbols []string) (<-chan CryptoPriceEvent, error)
 	SubscribeChainlinkPrices(ctx context.Context, feeds []string) (<-chan ChainlinkPriceEvent, error)
+	SubscribeTWAPPrices(ctx context.Context, windowSeconds int, symbols []string) (<-chan TWAPPriceEvent, error)
 	SubscribeComments(ctx context.Context, req *CommentFilter) (<-chan CommentEvent, error)
 	SubscribeOrdersMatched(ctx context.Context) (<-chan OrdersMatchedEvent, error)
 	SubscribeRaw(ctx context.Context, sub *Subscription) (<-chan RtdsMessage, error)
 	UnsubscribeCryptoPrices(ctx context.Context) error
 	UnsubscribeChainlinkPrices(ctx context.Context) error
+	UnsubscribeTWAPPrices(ctx context.Context, windowSeconds int) error
 	UnsubscribeComments(ctx context.Context, commentType *CommentType) error
 	UnsubscribeOrdersMatched(ctx context.Context) error
 	UnsubscribeRaw(ctx context.Context, sub *Subscription) error

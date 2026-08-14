@@ -6,6 +6,20 @@ import (
 	"strings"
 )
 
+func compactSymbolFilter(symbol string) string {
+	symbol = strings.TrimSpace(strings.ToLower(symbol))
+	if symbol == "" {
+		return ""
+	}
+	b, err := json.Marshal(struct {
+		Symbol string `json:"symbol"`
+	}{Symbol: symbol})
+	if err != nil {
+		return ""
+	}
+	return string(b)
+}
+
 func symbolSet(symbols []string) map[string]struct{} {
 	if len(symbols) == 0 {
 		return nil

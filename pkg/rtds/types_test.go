@@ -33,6 +33,19 @@ func TestSubscriptionFiltersSerialization(t *testing.T) {
 		t.Fatalf("expected chainlink filters as string, got %s", string(data))
 	}
 
+	twap := Subscription{
+		Topic:   string(CryptoPriceTWAPThirty),
+		MsgType: "update",
+		Filters: `{"symbol":"btc/usd"}`,
+	}
+	data, err = json.Marshal(twap)
+	if err != nil {
+		t.Fatalf("marshal failed: %v", err)
+	}
+	if !strings.Contains(string(data), `"filters":"{\"symbol\":\"btc/usd\"}"`) {
+		t.Fatalf("expected twap filters as string, got %s", string(data))
+	}
+
 	raw := Subscription{
 		Topic:   string(CryptoPrice),
 		MsgType: "update",

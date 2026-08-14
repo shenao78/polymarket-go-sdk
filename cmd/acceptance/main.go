@@ -291,6 +291,18 @@ func main() {
 				case <-stream.C:
 				}
 				_ = rtdsClient.UnsubscribeCryptoPrices(context.Background())
+				return nil
+			}))
+			results = append(results, runCheck(ctx, *timeout, "rtds.twap_prices", true, func(ctx context.Context) error {
+				stream, err := rtdsClient.SubscribeTWAPPricesStream(ctx, rtds.TWAPWindow30, []string{"btc/usd"})
+				if err != nil {
+					return err
+				}
+				select {
+				case <-ctx.Done():
+				case <-stream.C:
+				}
+				_ = rtdsClient.UnsubscribeTWAPPrices(context.Background(), rtds.TWAPWindow30)
 				return closeRTDS()
 			}))
 		}

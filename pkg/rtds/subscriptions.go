@@ -71,6 +71,41 @@ func (c *clientImpl) SubscribeChainlinkPricesStream(ctx context.Context, feeds [
 	}), nil
 }
 
+func (c *clientImpl) SubscribeTWAPPricesStream(ctx context.Context, windowSeconds int, symbols []string) (*Stream[TWAPPriceEvent], error) {
+	topic, err := twapTopic(windowSeconds)
+	if err != nil {
+		return nil, err
+	}
+	sub := Subscription{Topic: string(topic), MsgType: "update"}
+	if len(symbols) == 1 {
+		if filter := compactSymbolFilter(symbols[0]); filter != "" {
+			sub.Filters = filter
+		}
+	}
+	rawStream, err := c.subscribeRawStream(sub, nil)
+	if err != nil {
+		return nil, err
+	}
+	set := symbolSet(symbols)
+	return mapStream(rawStream, sub.Topic, sub.MsgType, func(msg RtdsMessage) (TWAPPriceEvent, bool) {
+		var payload TWAPPriceEvent
+		if err := json.Unmarshal(msg.Payload, &payload); err != nil {
+			return TWAPPriceEvent{}, false
+		}
+		if len(set) > 0 {
+			if _, ok := set[strings.ToLower(payload.Symbol)]; !ok {
+				return TWAPPriceEvent{}, false
+			}
+		}
+		payload.BaseEvent = BaseEvent{
+			Topic:            topic,
+			MessageType:      msg.MsgType,
+			MessageTimestamp: msg.Timestamp,
+		}
+		return payload, true
+	}), nil
+}
+
 func (c *clientImpl) SubscribeCommentsStream(ctx context.Context, req *CommentFilter) (*Stream[CommentEvent], error) {
 	msgType := "*"
 	sub := Subscription{Topic: string(Comments), MsgType: msgType}
@@ -163,6 +198,14 @@ func (c *clientImpl) SubscribeChainlinkPrices(ctx context.Context, feeds []strin
 	return stream.C, nil
 }
 
+func (c *clientImpl) SubscribeTWAPPrices(ctx context.Context, windowSeconds int, symbols []string) (<-chan TWAPPriceEvent, error) {
+	stream, err := c.SubscribeTWAPPricesStream(ctx, windowSeconds, symbols)
+	if err != nil {
+		return nil, err
+	}
+	return stream.C, nil
+}
+
 func (c *clientImpl) SubscribeComments(ctx context.Context, req *CommentFilter) (<-chan CommentEvent, error) {
 	stream, err := c.SubscribeCommentsStream(ctx, req)
 	if err != nil {
@@ -197,6 +240,14 @@ func (c *clientImpl) UnsubscribeChainlinkPrices(ctx context.Context) error {
 	topic := string(ChainlinkPrice)
 	msgType := "*"
 	return c.unsubscribeTopic(topic, msgType)
+}
+
+func (c *clientImpl) UnsubscribeTWAPPrices(ctx context.Context, windowSeconds int) error {
+	topic, err := twapTopic(windowSeconds)
+	if err != nil {
+		return err
+	}
+	return c.unsubscribeTopic(string(topic), "update")
 }
 
 func (c *clientImpl) UnsubscribeComments(ctx context.Context, commentType *CommentType) error {
